@@ -29,7 +29,7 @@ This guide explains how to use the Barion MCP server with Visual Studio Code and
         "C:/Users/YOUR_USERNAME/repos/barion-mcp/dist/index.js"
       ],
       "env": {
-        "BARION_POSKEY": "your_actual_poskey",
+        "BARION_POS_KEY": "your_actual_poskey",
         "BARION_API_KEY": "your_actual_apikey"
       }
     }
@@ -67,7 +67,7 @@ Makes Barion MCP available in all VS Code workspaces.
         "C:/Users/YOUR_USERNAME/repos/barion-mcp/dist/index.js"
       ],
       "env": {
-        "BARION_POSKEY": "${input:barion-poskey}",
+        "BARION_POS_KEY": "${input:barion-poskey}",
         "BARION_API_KEY": "${input:barion-apikey}"
       }
     }
@@ -103,7 +103,7 @@ Edit `.vscode/mcp.json` in your project:
       "command": "node",
       "args": ["dist/index.js"],
       "env": {
-        "BARION_POSKEY": "your_poskey",
+        "BARION_POS_KEY": "your_poskey",
         "BARION_API_KEY": "your_apikey"
       }
     }
@@ -117,7 +117,7 @@ Edit `.vscode/mcp.json` in your project:
 
 1. **Set environment variables** (Windows PowerShell):
 ```powershell
-[System.Environment]::SetEnvironmentVariable('BARION_POSKEY', 'your_poskey', 'User')
+[System.Environment]::SetEnvironmentVariable('BARION_POS_KEY', 'your_poskey', 'User')
 [System.Environment]::SetEnvironmentVariable('BARION_API_KEY', 'your_apikey', 'User')
 ```
 
@@ -156,7 +156,7 @@ Open GitHub Copilot Chat (`Ctrl+Alt+I`) and ask:
 List available Barion tools
 ```
 
-You should see:
+You should see **11 total tools**:
 - **Payment tools** (4): start_payment, get_payment_state, finish_reservation, refund_payment
 - **Wallet tools** (7): get_wallet_accounts, get_wallet_balance, get_bank_accounts, get_wallet_statement, withdraw_to_bank, get_user_info, send_money
 
@@ -165,12 +165,25 @@ You should see:
 ## Usage Examples
 
 ### Payment Operations
+
+**Start a new payment:**
 ```
 Start a payment for 5000 HUF with redirect to https://myapp.com/return
 ```
 
+**Check payment status:**
 ```
 Check status of payment abc-123
+```
+
+**Capture a reserved payment:**
+```
+Finish reservation for payment xyz-456 with amount 1000 EUR
+```
+
+**Refund a payment:**
+```
+Refund 50 USD from payment abc-789, transaction id trans-123
 ```
 
 ### Wallet Operations
@@ -212,7 +225,7 @@ npm run build
 ### Credentials Not Working
 
 - Verify no extra spaces in credentials
-- Payment tools need `BARION_POSKEY`
+- Payment tools need `BARION_POS_KEY`
 - Wallet tools need `BARION_API_KEY`
 - Use test credentials with test environment (default)
 
@@ -236,7 +249,7 @@ npm run build
       "command": "node",
       "args": ["C:/Users/YOUR_USERNAME/repos/barion-mcp/dist/index.js"],
       "env": {
-        "BARION_POSKEY": "your_poskey"
+        "BARION_POS_KEY": "your_poskey"
       }
     }
   }
@@ -268,7 +281,7 @@ npm run build
       "command": "node",
       "args": ["C:/Users/YOUR_USERNAME/repos/barion-mcp/dist/index.js"],
       "env": {
-        "BARION_POSKEY": "your_poskey",
+        "BARION_POS_KEY": "your_poskey",
         "BARION_API_KEY": "your_apikey",
         "BARION_ENV": "prod"
       }

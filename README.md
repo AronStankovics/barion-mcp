@@ -50,7 +50,7 @@ npm run build
 ```bash
 cp .env.example .env
 # Edit .env and add your credentials:
-# - BARION_POSKEY for payment operations
+# - BARION_POS_KEY for payment operations
 # - BARION_API_KEY for wallet operations
 ```
 
@@ -62,12 +62,12 @@ You can run the server in several ways:
 
 1. **With both credentials (payment + wallet):**
 ```bash
-BARION_POSKEY=your_poskey BARION_API_KEY=your_apikey npm start
+BARION_POS_KEY=your_poskey BARION_API_KEY=your_apikey npm start
 ```
 
 2. **With only POSKey (payment operations only):**
 ```bash
-BARION_POSKEY=your_poskey npm start
+BARION_POS_KEY=your_poskey npm start
 ```
 
 3. **With only API Key (wallet operations only):**
@@ -90,7 +90,7 @@ npm run inspect
 To use this MCP server with VS Code and GitHub Copilot:
 
 1. Copy the [.vscode/mcp.json](.vscode/mcp.json) configuration
-2. Update the credentials (`BARION_POSKEY` and/or `BARION_API_KEY`) in the configuration
+2. Update the credentials (`BARION_POS_KEY` and/or `BARION_API_KEY`) in the configuration
 3. Restart VS Code
 4. The Barion tools will be available to GitHub Copilot
 
@@ -243,13 +243,14 @@ Get user information from Barion wallet.
 
 #### send_money
 
-Send money to another Barion user by email address.
+Send money to another Barion user by email address. If the recipient is not registered in Barion, they have 7 days to claim the money.
 
 **Parameters:**
 - `recipientEmail`: Email address of the recipient
-- `currency`: Currency code
+- `currency`: Currency code (CZK, EUR, HUF, USD)
 - `amount`: Amount to send
-- `comment`: Optional comment
+- `comment`: Optional comment (max 1000 characters)
+- `sourceAccountId`: Optional - Source account ID (auto-selected if not provided)
 
 ## Contributing
 
