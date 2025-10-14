@@ -214,12 +214,13 @@ export function configureWalletTools(server: McpServer, apiKey: string, environm
   // Tool: Send Money
   server.tool(
     'send_money',
-    'Send money to another Barion user by email address',
+    'Send money to another Barion user by email address. If recipient is not registered, they have 7 days to claim.',
     {
       recipientEmail: z.string().email().describe('Email address of the recipient'),
-      currency: z.string().describe('Currency code (e.g., HUF, EUR, USD)'),
+      currency: z.string().describe('Currency code (CZK, EUR, HUF, USD)'),
       amount: z.number().positive().describe('Amount to send'),
-      comment: z.string().optional().describe('Optional comment for the transfer'),
+      comment: z.string().optional().describe('Optional comment for the transfer (max 1000 characters)'),
+      sourceAccountId: z.string().optional().describe('Optional: Source account ID. If not provided, uses first account with matching currency'),
     },
     async (args) => {
       try {
@@ -228,6 +229,7 @@ export function configureWalletTools(server: McpServer, apiKey: string, environm
           currency: args.currency,
           amount: args.amount,
           comment: args.comment,
+          sourceAccountId: args.sourceAccountId,
         });
         return {
           content: [

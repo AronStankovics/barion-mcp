@@ -20,6 +20,7 @@ export interface StartPaymentRequest {
   transactions: PaymentTransaction[];
   redirectUrl: string;
   callbackUrl: string;
+  paymentRequestId?: string;
 }
 
 export interface FinishReservationRequest {
@@ -49,36 +50,67 @@ export class BarionClient {
         : 'https://api.test.barion.com';
   }
 
-  private async request<T>(endpoint: string, data: Record<string, unknown>): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      method: 'POST',
-      headers: {
+  private async request<T>(endpoint: string, data: Record<string, unknown>, method: 'POST' | 'GET' = 'POST'): Promise<T> {
+    const params = {
+      POSKey: this.poskey,
+      ...data,
+    };
+
+    let url = `${this.baseUrl}${endpoint}`;
+    let body: string | undefined;
+
+    if (method === 'GET') {
+      // For GET requests, append parameters as query string
+      const queryParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        queryParams.append(key, String(value));
+      });
+      url = `${url}?${queryParams.toString()}`;
+      console.error(`[Barion API] GET Request to: ${url}`);
+    } else {
+      // For POST requests, send as JSON body
+      body = JSON.stringify(params);
+      console.error(`[Barion API] POST Request to: ${url}`);
+      console.error(`[Barion API] Payload:`, JSON.stringify(params, null, 2));
+    }
+
+    const response = await fetch(url, {
+      method,
+      headers: method === 'POST' ? {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        POSKey: this.poskey,
-        ...data,
-      }),
+      } : undefined,
+      body,
     });
 
+    console.error(`[Barion API] Response status: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`[Barion API] Error response body:`, errorText);
+      throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
     }
 
     const result = await response.json();
+    console.error(`[Barion API] Response body:`, JSON.stringify(result, null, 2));
 
     // Check for Barion API errors
     if (result.Errors && result.Errors.length > 0) {
-      throw new Error(`Barion API Error: ${result.Errors.join(', ')}`);
+      console.error(`[Barion API] API Errors:`, result.Errors);
+      throw new Error(`Barion API Error: ${result.Errors.map((e: any) => `${e.ErrorCode}: ${e.Title} - ${e.Description}`).join(', ')}`);
     }
 
     return result as T;
   }
 
   async startPayment(request: StartPaymentRequest): Promise<unknown> {
+    // Generate a unique PaymentRequestId if not provided
+    const paymentRequestId = request.paymentRequestId || `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     const payload = {
       PaymentType: request.paymentType,
+      PaymentRequestId: paymentRequestId,
       Currency: request.currency,
+      FundingSources: ['All'],
       Transactions: request.transactions.map((t) => ({
         POSTransactionId: t.posTransactionId,
         Payee: t.payee,
@@ -104,7 +136,7 @@ export class BarionClient {
   async getPaymentState(paymentId: string): Promise<unknown> {
     return this.request('/v2/Payment/GetPaymentState', {
       PaymentId: paymentId,
-    });
+    }, 'GET');
   }
 
   async finishReservation(request: FinishReservationRequest): Promise<unknown> {

@@ -40,6 +40,11 @@ async function main() {
   const apiKey = argv.apiKey || process.env.BARION_API_KEY;
   const environment = (argv.environment || process.env.BARION_ENVIRONMENT || 'test') as 'test' | 'prod';
 
+  // Debug logging
+  console.error('[Debug] POSKey present:', !!poskey, poskey ? `(${poskey.substring(0, 8)}...)` : '(none)');
+  console.error('[Debug] API Key present:', !!apiKey, apiKey ? `(${apiKey.substring(0, 8)}...)` : '(none)');
+  console.error('[Debug] Environment:', environment);
+
   if (!poskey && !apiKey) {
     console.error('Error: At least one credential is required. Provide BARION_POS_KEY for payment tools or BARION_API_KEY for wallet tools.');
     process.exit(1);

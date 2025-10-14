@@ -15,7 +15,7 @@ export function configurePaymentTools(server: McpServer, poskey: string, environ
       transactions: z.array(
         z.object({
           posTransactionId: z.string().describe('Unique ID for this transaction'),
-          payee: z.string().describe('Email address of the payee'),
+          payee: z.string().email().describe('Email address of the payee (must be a registered Barion user)'),
           total: z.number().describe('Total amount'),
           items: z.array(
             z.object({
