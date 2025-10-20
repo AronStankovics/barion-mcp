@@ -204,4 +204,37 @@ export function configurePaymentTools(server: McpServer, poskey: string, environ
       }
     }
   );
+
+  // Tool: Cancel Authorization
+  server.tool(
+    'cancel_authorization',
+    'Cancel an authorized payment (for DelayedCapture payment type)',
+    {
+      paymentId: z.string().describe('The Barion payment ID to cancel'),
+    },
+    async (args) => {
+      try {
+        const result = await client.cancelAuthorization(args);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error canceling authorization: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
 }

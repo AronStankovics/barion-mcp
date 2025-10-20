@@ -46,6 +46,10 @@ export interface CapturePaymentRequest {
   }[];
 }
 
+export interface CancelAuthorizationRequest {
+  paymentId: string;
+}
+
 export class BarionClient {
   private poskey: string;
   private baseUrl: string;
@@ -180,5 +184,13 @@ export class BarionClient {
     };
 
     return this.request('/v2/Payment/Capture', payload);
+  }
+
+  async cancelAuthorization(request: CancelAuthorizationRequest): Promise<unknown> {
+    const payload = {
+      PaymentId: request.paymentId,
+    };
+
+    return this.request('/v2/Payment/CancelAuthorization', payload);
   }
 }
