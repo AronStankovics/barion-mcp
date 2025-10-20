@@ -165,4 +165,43 @@ export function configurePaymentTools(server: McpServer, poskey: string, environ
       }
     }
   );
+
+  // Tool: Capture Payment
+  server.tool(
+    'capture_payment',
+    'Capture a previously authorized payment (for DelayedCapture payment type)',
+    {
+      paymentId: z.string().describe('The Barion payment ID'),
+      transactions: z.array(
+        z.object({
+          transactionId: z.string().describe('The transaction ID'),
+          total: z.number().describe('Amount to capture'),
+        })
+      ).describe('Array of transactions to capture'),
+    },
+    async (args) => {
+      try {
+        const result = await client.capturePayment(args);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error capturing payment: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
 }

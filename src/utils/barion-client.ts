@@ -38,6 +38,14 @@ export interface RefundPaymentRequest {
   comment?: string;
 }
 
+export interface CapturePaymentRequest {
+  paymentId: string;
+  transactions: {
+    transactionId: string;
+    total: number;
+  }[];
+}
+
 export class BarionClient {
   private poskey: string;
   private baseUrl: string;
@@ -160,5 +168,17 @@ export class BarionClient {
     };
 
     return this.request('/v2/Payment/Refund', payload);
+  }
+
+  async capturePayment(request: CapturePaymentRequest): Promise<unknown> {
+    const payload = {
+      PaymentId: request.paymentId,
+      Transactions: request.transactions.map((t) => ({
+        TransactionId: t.transactionId,
+        Total: t.total,
+      })),
+    };
+
+    return this.request('/v2/Payment/Capture', payload);
   }
 }
