@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { BarionClient } from '../utils/barion-client.js';
 import { formatResponse, formatPaymentState, formatSuccessResponse } from '../utils/response-formatter.js';
+import { formatBarionError } from '../utils/error-handler.js';
 
 export function configurePaymentTools(server: McpServer, poskey: string, environment: 'test' | 'prod' = 'test') {
   const client = new BarionClient(poskey, environment);
@@ -84,12 +85,11 @@ IMPORTANT: The payee email must be a registered Barion merchant account. All amo
           ],
         };
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: 'text',
-              text: `Error starting payment: ${errorMessage}`,
+              text: formatBarionError('Start Payment', error),
             },
           ],
           isError: true,
@@ -157,12 +157,11 @@ After creating a payment with start_payment, DO NOT repeatedly poll this endpoin
           ],
         };
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: 'text',
-              text: `Error getting payment state: ${errorMessage}`,
+              text: formatBarionError('Get Payment State', error),
             },
           ],
           isError: true,
@@ -233,12 +232,11 @@ IMPORTANT:
           ],
         };
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: 'text',
-              text: `Error finishing reservation: ${errorMessage}`,
+              text: formatBarionError('Finish Reservation', error),
             },
           ],
           isError: true,
@@ -311,12 +309,11 @@ TIP: Always include a descriptive comment to help with record-keeping and custom
           ],
         };
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: 'text',
-              text: `Error refunding payment: ${errorMessage}`,
+              text: formatBarionError('Refund Payment', error),
             },
           ],
           isError: true,
@@ -392,12 +389,11 @@ IMPORTANT:
           ],
         };
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: 'text',
-              text: `Error capturing payment: ${errorMessage}`,
+              text: formatBarionError('Capture Payment', error),
             },
           ],
           isError: true,
@@ -468,12 +464,11 @@ Customer orders a custom product. Payment is authorized (DelayedCapture). During
           ],
         };
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: 'text',
-              text: `Error canceling authorization: ${errorMessage}`,
+              text: formatBarionError('Cancel Authorization', error),
             },
           ],
           isError: true,

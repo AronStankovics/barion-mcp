@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { WalletClient } from '../utils/wallet-client.js';
 import { formatResponse, formatWalletAccounts, formatWalletStatement, formatSuccessResponse } from '../utils/response-formatter.js';
+import { formatBarionError } from '../utils/error-handler.js';
 
 export function configureWalletTools(server: McpServer, apiKey: string, environment: 'test' | 'prod' = 'test') {
   const client = new WalletClient(apiKey, environment);
@@ -59,12 +60,11 @@ TIP: The returned Account IDs are used in send_money (sourceAccountId parameter)
           ],
         };
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: 'text',
-              text: `Error getting wallet accounts: ${errorMessage}`,
+              text: formatBarionError('Get Wallet Accounts', error),
             },
           ],
           isError: true,
@@ -127,12 +127,11 @@ TIP: This tool uses the same underlying API as get_wallet_accounts but filters b
           ],
         };
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: 'text',
-              text: `Error getting wallet balance: ${errorMessage}`,
+              text: formatBarionError('Get Wallet Balance', error),
             },
           ],
           isError: true,
@@ -215,12 +214,11 @@ TIP: For recent activity across all currencies, call without currency parameter.
           ],
         };
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: 'text',
-              text: `Error getting wallet statement: ${errorMessage}`,
+              text: formatBarionError('Get Wallet Statement', error),
             },
           ],
           isError: true,
@@ -338,12 +336,11 @@ IMPORTANT:
           ],
         };
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: 'text',
-              text: `Error withdrawing to bank: ${errorMessage}`,
+              text: formatBarionError('Withdraw to Bank', error),
             },
           ],
           isError: true,
@@ -444,12 +441,11 @@ IMPORTANT:
           ],
         };
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: 'text',
-              text: `Error sending money: ${errorMessage}`,
+              text: formatBarionError('Send Money', error),
             },
           ],
           isError: true,
