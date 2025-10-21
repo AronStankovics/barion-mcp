@@ -1,3 +1,7 @@
+// ============================================================================
+// Request Types
+// ============================================================================
+
 export interface PaymentItem {
   name: string;
   description: string;
@@ -14,9 +18,14 @@ export interface PaymentTransaction {
   items: PaymentItem[];
 }
 
+export type Currency = 'HUF' | 'EUR' | 'USD' | 'CZK';
+export type PaymentType = 'Immediate' | 'Reservation' | 'DelayedCapture';
+export type PaymentStatus = 'Prepared' | 'Started' | 'InProgress' | 'Waiting' | 'Reserved' | 'Authorized' | 'Canceled' | 'Succeeded' | 'Failed' | 'PartiallySucceeded' | 'Expired';
+export type TransactionStatus = 'Prepared' | 'Started' | 'Succeeded' | 'Timeout' | 'ShopCanceled' | 'UserCanceled' | 'Reserved' | 'Authorized' | 'Expired' | 'Refunded' | 'PartiallyRefunded';
+
 export interface StartPaymentRequest {
-  paymentType: 'Immediate' | 'Reservation' | 'DelayedCapture';
-  currency: string;
+  paymentType: PaymentType;
+  currency: Currency;
   transactions: PaymentTransaction[];
   redirectUrl: string;
   callbackUrl: string;
@@ -48,6 +57,118 @@ export interface CapturePaymentRequest {
 
 export interface CancelAuthorizationRequest {
   paymentId: string;
+}
+
+// ============================================================================
+// Response Types
+// ============================================================================
+
+export interface BarionError {
+  ErrorCode: string;
+  Title: string;
+  Description: string;
+  AuthData?: string;
+  EndPoint?: string;
+}
+
+export interface TransactionDetail {
+  TransactionId: string;
+  POSTransactionId: string;
+  TransactionTime: string;
+  Total: number;
+  Currency: Currency;
+  Payer?: {
+    Name?: string;
+    Email?: string;
+  };
+  Payee: string;
+  Comment?: string;
+  Status: TransactionStatus;
+  TransactionType?: string;
+  Items?: {
+    Name: string;
+    Description: string;
+    Quantity: number;
+    Unit: string;
+    UnitPrice: number;
+    ItemTotal: number;
+    SKU?: string;
+  }[];
+  RelatedId?: string;
+  POSTransactionTime?: string;
+}
+
+export interface StartPaymentResponse {
+  PaymentId: string;
+  PaymentRequestId: string;
+  Status: PaymentStatus;
+  QRUrl?: string;
+  RecurrenceResult?: string;
+  GatewayUrl: string;
+  RedirectUrl?: string;
+  CallbackUrl?: string;
+  Transactions?: TransactionDetail[];
+  Errors?: BarionError[];
+}
+
+export interface PaymentStateResponse {
+  PaymentId: string;
+  PaymentRequestId: string;
+  POSId: string;
+  POSName: string;
+  Status: PaymentStatus;
+  PaymentType: PaymentType;
+  FundingSource?: string;
+  FundingSources?: string[];
+  AllowedFundingSources?: string[];
+  GuestCheckout: boolean;
+  CreatedAt: string;
+  ValidUntil: string;
+  CompletedAt?: string;
+  ReservedUntil?: string;
+  Total: number;
+  Currency: Currency;
+  Transactions: TransactionDetail[];
+  SuggestedLocale?: string;
+  FraudRiskScore?: number;
+  RedirectUrl?: string;
+  CallbackUrl?: string;
+  Errors?: BarionError[];
+}
+
+export interface FinishReservationResponse {
+  IsSuccessful: boolean;
+  PaymentId: string;
+  PaymentRequestId: string;
+  Status: PaymentStatus;
+  Transactions: TransactionDetail[];
+  Errors?: BarionError[];
+}
+
+export interface RefundPaymentResponse {
+  IsSuccessful: boolean;
+  PaymentId: string;
+  PaymentRequestId: string;
+  Status: PaymentStatus;
+  TransactionId: string;
+  Errors?: BarionError[];
+}
+
+export interface CapturePaymentResponse {
+  IsSuccessful: boolean;
+  PaymentId: string;
+  PaymentRequestId: string;
+  Status: PaymentStatus;
+  Transactions: TransactionDetail[];
+  Errors?: BarionError[];
+}
+
+export interface CancelAuthorizationResponse {
+  IsSuccessful: boolean;
+  PaymentId: string;
+  PaymentRequestId: string;
+  Status: PaymentStatus;
+  Errors?: BarionError[];
 }
 
 export class BarionClient {
@@ -114,7 +235,7 @@ export class BarionClient {
     return result as T;
   }
 
-  async startPayment(request: StartPaymentRequest): Promise<unknown> {
+  async startPayment(request: StartPaymentRequest): Promise<StartPaymentResponse> {
     // Generate a unique PaymentRequestId if not provided
     const paymentRequestId = request.paymentRequestId || `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -142,16 +263,16 @@ export class BarionClient {
       Locale: 'en-US',
     };
 
-    return this.request('/v2/Payment/Start', payload);
+    return this.request<StartPaymentResponse>('/v2/Payment/Start', payload);
   }
 
-  async getPaymentState(paymentId: string): Promise<unknown> {
-    return this.request('/v2/Payment/GetPaymentState', {
+  async getPaymentState(paymentId: string): Promise<PaymentStateResponse> {
+    return this.request<PaymentStateResponse>('/v2/Payment/GetPaymentState', {
       PaymentId: paymentId,
     }, 'GET');
   }
 
-  async finishReservation(request: FinishReservationRequest): Promise<unknown> {
+  async finishReservation(request: FinishReservationRequest): Promise<FinishReservationResponse> {
     const payload = {
       PaymentId: request.paymentId,
       Transactions: request.transactions.map((t) => ({
@@ -160,10 +281,10 @@ export class BarionClient {
       })),
     };
 
-    return this.request('/v2/Payment/FinishReservation', payload);
+    return this.request<FinishReservationResponse>('/v2/Payment/FinishReservation', payload);
   }
 
-  async refundPayment(request: RefundPaymentRequest): Promise<unknown> {
+  async refundPayment(request: RefundPaymentRequest): Promise<RefundPaymentResponse> {
     const payload = {
       PaymentId: request.paymentId,
       TransactionId: request.transactionId,
@@ -171,10 +292,10 @@ export class BarionClient {
       Comment: request.comment || '',
     };
 
-    return this.request('/v2/Payment/Refund', payload);
+    return this.request<RefundPaymentResponse>('/v2/Payment/Refund', payload);
   }
 
-  async capturePayment(request: CapturePaymentRequest): Promise<unknown> {
+  async capturePayment(request: CapturePaymentRequest): Promise<CapturePaymentResponse> {
     const payload = {
       PaymentId: request.paymentId,
       Transactions: request.transactions.map((t) => ({
@@ -183,14 +304,14 @@ export class BarionClient {
       })),
     };
 
-    return this.request('/v2/Payment/Capture', payload);
+    return this.request<CapturePaymentResponse>('/v2/Payment/Capture', payload);
   }
 
-  async cancelAuthorization(request: CancelAuthorizationRequest): Promise<unknown> {
+  async cancelAuthorization(request: CancelAuthorizationRequest): Promise<CancelAuthorizationResponse> {
     const payload = {
       PaymentId: request.paymentId,
     };
 
-    return this.request('/v2/Payment/CancelAuthorization', payload);
+    return this.request<CancelAuthorizationResponse>('/v2/Payment/CancelAuthorization', payload);
   }
 }

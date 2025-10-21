@@ -1,18 +1,67 @@
+// ============================================================================
+// Type Definitions
+// ============================================================================
+
+export type Currency = 'HUF' | 'EUR' | 'USD' | 'CZK';
+
 export interface WalletAccount {
   Id: string;
   Owner: string;
   Balance: number;
-  Currency: string;
+  Currency: Currency;
 }
 
+export interface AccountsResponse {
+  Accounts: WalletAccount[];
+  Errors?: Array<{
+    ErrorCode: string;
+    Title: string;
+    Description: string;
+  }>;
+}
 
 export interface Statement {
   TransactionId: string;
-  Currency: string;
+  Currency: Currency;
   Amount: number;
   TransactionTime: string;
   Comment: string;
   Type: string;
+}
+
+export interface StatementResponse {
+  Transactions: Statement[];
+  Errors?: Array<{
+    ErrorCode: string;
+    Title: string;
+    Description: string;
+  }>;
+}
+
+export interface WithdrawResponse {
+  IsSuccessful: boolean;
+  TransactionId?: string;
+  Errors?: Array<{
+    ErrorCode: string;
+    Title: string;
+    Description: string;
+  }>;
+}
+
+export interface SendMoneyResponse {
+  IsSuccessful: boolean;
+  TransactionId?: string;
+  SourceAccountId?: string;
+  TargetEmail?: string;
+  Amount?: {
+    Currency: Currency;
+    Value: number;
+  };
+  Errors?: Array<{
+    ErrorCode: string;
+    Title: string;
+    Description: string;
+  }>;
 }
 
 export class WalletClient {
@@ -83,7 +132,7 @@ export class WalletClient {
 
   // Get wallet accounts - v2 endpoint, requires wallet authentication
   async getAccounts(): Promise<WalletAccount[]> {
-    const result = await this.request<{ Accounts: WalletAccount[] }>(
+    const result = await this.request<AccountsResponse>(
       '/v2/accounts',
       {},
       'GET'
@@ -92,7 +141,7 @@ export class WalletClient {
   }
 
   // Get account balance - using accounts endpoint to derive balance
-  async getBalance(currency?: string): Promise<unknown> {
+  async getBalance(currency?: Currency): Promise<WalletAccount[]> {
     const accounts = await this.getAccounts();
     if (currency) {
       return accounts.filter(acc => acc.Currency === currency);
@@ -104,7 +153,7 @@ export class WalletClient {
   async getStatement(params: {
     year: number;
     month: number;
-    currency?: string;
+    currency?: Currency;
   }): Promise<Statement[]> {
     const requestParams: Record<string, unknown> = {
       Year: params.year,
@@ -115,7 +164,7 @@ export class WalletClient {
     }
 
     // Using v3 UserHistory endpoint
-    const result = await this.request<{ Transactions: Statement[] }>(
+    const result = await this.request<StatementResponse>(
       '/v3/userhistory/gethistory',
       requestParams,
       'GET'
@@ -125,14 +174,14 @@ export class WalletClient {
 
   // Withdraw to bank account - v3 endpoint (v2 is obsolete as of 2022)
   async withdraw(params: {
-    currency: string;
+    currency: Currency;
     amount: number;
     accountNumber: string;
     accountHolderName: string;
     swift: string;
     comment?: string;
-  }): Promise<unknown> {
-    return this.request('/v3/withdraw/banktransfer', {
+  }): Promise<WithdrawResponse> {
+    return this.request<WithdrawResponse>('/v3/withdraw/banktransfer', {
       Currency: params.currency,
       Amount: params.amount,
       BankAccount: {
@@ -147,11 +196,11 @@ export class WalletClient {
   // Send money to email address - v2 Transfer/Email endpoint (POST)
   async sendMoney(params: {
     recipientEmail: string;
-    currency: string;
+    currency: Currency;
     amount: number;
     comment?: string;
     sourceAccountId?: string;
-  }): Promise<unknown> {
+  }): Promise<SendMoneyResponse> {
     // If sourceAccountId is not provided, get the first account with matching currency
     let accountId = params.sourceAccountId;
     if (!accountId) {
@@ -163,7 +212,7 @@ export class WalletClient {
       accountId = matchingAccount.Id;
     }
 
-    return this.request('/v2/Transfer/Email', {
+    return this.request<SendMoneyResponse>('/v2/Transfer/Email', {
       SourceAccountId: accountId,
       Amount: {
         Currency: params.currency,

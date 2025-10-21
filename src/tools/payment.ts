@@ -38,26 +38,26 @@ Returns a PaymentId (unique identifier for this payment), PaymentRequestId (your
 IMPORTANT: The payee email must be a registered Barion merchant account. All amounts must be positive numbers. The redirectUrl and callbackUrl must be valid HTTPS URLs (HTTP allowed only in test environment).`,
     {
       paymentType: z.enum(['Immediate', 'Reservation', 'DelayedCapture']).describe('The type of payment'),
-      currency: z.string().describe('Currency code (e.g., HUF, EUR, USD)'),
+      currency: z.enum(['HUF', 'EUR', 'USD', 'CZK']).describe('Currency code: HUF (Hungarian Forint), EUR (Euro), USD (US Dollar), or CZK (Czech Koruna)'),
       transactions: z.array(
         z.object({
           posTransactionId: z.string().describe('Unique ID for this transaction'),
           payee: z.string().email().describe('Email address of the payee (must be a registered Barion user)'),
-          total: z.number().describe('Total amount'),
+          total: z.number().positive().describe('Total amount (must be positive)'),
           items: z.array(
             z.object({
               name: z.string().describe('Item name'),
               description: z.string().describe('Item description'),
-              quantity: z.number().describe('Quantity'),
+              quantity: z.number().positive().describe('Quantity (must be positive)'),
               unit: z.string().describe('Unit (e.g., piece, hour)'),
-              unitPrice: z.number().describe('Unit price'),
-              itemTotal: z.number().describe('Total price for this item'),
+              unitPrice: z.number().positive().describe('Unit price (must be positive)'),
+              itemTotal: z.number().positive().describe('Total price for this item (must be positive)'),
             })
           ),
         })
       ).describe('Array of transactions'),
-      redirectUrl: z.string().describe('URL where the customer will be redirected after completing payment (success or failure). Example: "https://myshop.com/payment/return"'),
-      callbackUrl: z.string().describe('URL where Barion will POST payment status change notifications (webhook). Your server should listen here and call get_payment_state when notified. Example: "https://myshop.com/api/barion/callback"'),
+      redirectUrl: z.string().url().describe('URL where the customer will be redirected after completing payment (success or failure). Example: "https://myshop.com/payment/return"'),
+      callbackUrl: z.string().url().describe('URL where Barion will POST payment status change notifications (webhook). Your server should listen here and call get_payment_state when notified. Example: "https://myshop.com/api/barion/callback"'),
       format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
       detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary, "detailed" for complete information'),
     },
@@ -202,7 +202,7 @@ IMPORTANT:
       transactions: z.array(
         z.object({
           transactionId: z.string().describe('The transaction ID'),
-          total: z.number().describe('Amount to capture'),
+          total: z.number().positive().describe('Amount to capture (must be positive)'),
         })
       ).describe('Array of transactions to finish'),
       format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
@@ -280,7 +280,7 @@ TIP: Always include a descriptive comment to help with record-keeping and custom
     {
       paymentId: z.string().describe('The Barion payment ID'),
       transactionId: z.string().describe('The transaction ID to refund'),
-      amount: z.number().describe('Amount to refund'),
+      amount: z.number().positive().describe('Amount to refund (must be positive, cannot exceed original transaction amount)'),
       comment: z.string().optional().describe('Optional comment for the refund'),
       format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
       detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary, "detailed" for complete information'),
@@ -359,7 +359,7 @@ IMPORTANT:
       transactions: z.array(
         z.object({
           transactionId: z.string().describe('The transaction ID'),
-          total: z.number().describe('Amount to capture'),
+          total: z.number().positive().describe('Amount to capture (must be positive, cannot exceed authorized amount)'),
         })
       ).describe('Array of transactions to capture'),
       format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),

@@ -99,7 +99,7 @@ EXAMPLE SCENARIOS:
 
 TIP: This tool uses the same underlying API as get_wallet_accounts but filters by currency if specified. For comprehensive account information including Account IDs, use get_wallet_accounts instead.`,
     {
-      currency: z.string().optional().describe('Currency code (e.g., HUF, EUR, USD). Optional.'),
+      currency: z.enum(['HUF', 'EUR', 'USD', 'CZK']).optional().describe('Currency code: HUF (Hungarian Forint), EUR (Euro), USD (US Dollar), or CZK (Czech Koruna). Optional.'),
       format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
       detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary, "detailed" for complete information'),
     },
@@ -182,7 +182,7 @@ TIP: For recent activity across all currencies, call without currency parameter.
     {
       year: z.number().describe('Year (e.g., 2025)'),
       month: z.number().min(1).max(12).describe('Month (1-12)'),
-      currency: z.string().optional().describe('Currency code (e.g., HUF, EUR, USD). Optional.'),
+      currency: z.enum(['HUF', 'EUR', 'USD', 'CZK']).optional().describe('Currency code: HUF (Hungarian Forint), EUR (Euro), USD (US Dollar), or CZK (Czech Koruna). Optional.'),
       format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
       detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary (first 10 transactions), "detailed" for all transactions'),
     },
@@ -296,8 +296,8 @@ IMPORTANT:
 - Account holder name should match the name registered with the bank
 - SWIFT code must be valid for the recipient's bank`,
     {
-      currency: z.string().describe('Currency code (e.g., HUF, EUR, USD, CZK)'),
-      amount: z.number().positive().describe('Amount to withdraw (must not exceed available balance)'),
+      currency: z.enum(['HUF', 'EUR', 'USD', 'CZK']).describe('Currency code: HUF (Hungarian Forint), EUR (Euro), USD (US Dollar), or CZK (Czech Koruna)'),
+      amount: z.number().positive().describe('Amount to withdraw (must be positive and not exceed available balance)'),
       accountNumber: z.string().describe('Full bank account number (IBAN for European accounts, e.g., "DE89370400440532013000", or local format)'),
       accountHolderName: z.string().describe('Full name of the bank account holder/recipient (must match bank records)'),
       swift: z.string().describe('SWIFT/BIC code of the recipient\'s bank (e.g., "DEUTDEFFXXX" for Deutsche Bank Germany)'),
@@ -404,8 +404,8 @@ IMPORTANT:
 - Transaction is immediate and cannot be reversed (contact recipient for refund if needed)`,
     {
       recipientEmail: z.string().email().describe('Email address of the recipient'),
-      currency: z.string().describe('Currency code (CZK, EUR, HUF, USD)'),
-      amount: z.number().positive().describe('Amount to send'),
+      currency: z.enum(['HUF', 'EUR', 'USD', 'CZK']).describe('Currency code: HUF (Hungarian Forint), EUR (Euro), USD (US Dollar), or CZK (Czech Koruna)'),
+      amount: z.number().positive().describe('Amount to send (must be positive and not exceed available balance)'),
       comment: z.string().optional().describe('Optional comment for the transfer (max 1000 characters)'),
       sourceAccountId: z.string().optional().describe('Optional: Source account ID. If not provided, uses first account with matching currency'),
       format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
