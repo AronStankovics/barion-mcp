@@ -5,13 +5,6 @@ export interface WalletAccount {
   Currency: string;
 }
 
-export interface BankAccount {
-  Id: string;
-  AccountNumber: string;
-  BankName: string;
-  Swift: string;
-  Currency: string;
-}
 
 export interface Statement {
   TransactionId: string;
@@ -107,17 +100,6 @@ export class WalletClient {
     return accounts;
   }
 
-  // Get bank accounts - v2 endpoint
-  async getBankAccounts(currency?: string): Promise<BankAccount[]> {
-    const params = currency ? { Currency: currency } : {};
-    const result = await this.request<{ BankAccounts: BankAccount[] }>(
-      '/v2/bankaccounts',
-      params,
-      'GET'
-    );
-    return result.BankAccounts || [];
-  }
-
   // Get statement (transaction history) - v3 endpoint
   async getStatement(params: {
     year: number;
@@ -145,21 +127,21 @@ export class WalletClient {
   async withdraw(params: {
     currency: string;
     amount: number;
-    bankAccountId: string;
+    accountNumber: string;
+    accountHolderName: string;
+    swift: string;
     comment?: string;
   }): Promise<unknown> {
     return this.request('/v3/withdraw/banktransfer', {
       Currency: params.currency,
       Amount: params.amount,
-      BankAccountId: params.bankAccountId,
+      BankAccount: {
+        AccountNumber: params.accountNumber,
+        AccountHolderName: params.accountHolderName,
+        Swift: params.swift,
+      },
       Comment: params.comment || '',
     }, 'POST');
-  }
-
-  // Get user information - using accounts endpoint
-  async getUserInfo(): Promise<unknown> {
-    // The accounts endpoint returns user wallet information
-    return this.getAccounts();
   }
 
   // Send money to email address - v2 Transfer/Email endpoint (POST)
