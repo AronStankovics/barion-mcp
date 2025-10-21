@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { WalletClient } from '../utils/wallet-client.js';
+import { formatResponse, formatWalletAccounts, formatWalletStatement, formatSuccessResponse } from '../utils/response-formatter.js';
 
 export function configureWalletTools(server: McpServer, apiKey: string, environment: 'test' | 'prod' = 'test') {
   const client = new WalletClient(apiKey, environment);
@@ -31,19 +32,29 @@ WORKFLOW EXAMPLES:
 
 TIP: The returned Account IDs are used in send_money (sourceAccountId parameter). If you don't provide a sourceAccountId to send_money, it will automatically use the first account matching the currency.`,
     {
+      format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
+      detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary, "detailed" for complete information'),
+    },
+    {
       readOnlyHint: true,
       destructiveHint: false,
       idempotentHint: true,
       openWorldHint: true,
     },
-    async () => {
+    async (args) => {
       try {
         const result = await client.getAccounts();
+        const formatted = formatResponse(
+          result,
+          args.format,
+          args.detail,
+          formatWalletAccounts
+        );
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatted,
             },
           ],
         };
@@ -89,6 +100,8 @@ EXAMPLE SCENARIOS:
 TIP: This tool uses the same underlying API as get_wallet_accounts but filters by currency if specified. For comprehensive account information including Account IDs, use get_wallet_accounts instead.`,
     {
       currency: z.string().optional().describe('Currency code (e.g., HUF, EUR, USD). Optional.'),
+      format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
+      detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary, "detailed" for complete information'),
     },
     {
       readOnlyHint: true,
@@ -99,11 +112,17 @@ TIP: This tool uses the same underlying API as get_wallet_accounts but filters b
     async (args) => {
       try {
         const result = await client.getBalance(args.currency);
+        const formatted = formatResponse(
+          result,
+          args.format,
+          args.detail,
+          formatWalletAccounts
+        );
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatted,
             },
           ],
         };
@@ -165,6 +184,8 @@ TIP: For recent activity across all currencies, call without currency parameter.
       year: z.number().describe('Year (e.g., 2025)'),
       month: z.number().min(1).max(12).describe('Month (1-12)'),
       currency: z.string().optional().describe('Currency code (e.g., HUF, EUR, USD). Optional.'),
+      format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
+      detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary (first 10 transactions), "detailed" for all transactions'),
     },
     {
       readOnlyHint: true,
@@ -179,11 +200,17 @@ TIP: For recent activity across all currencies, call without currency parameter.
           month: args.month,
           currency: args.currency,
         });
+        const formatted = formatResponse(
+          result,
+          args.format,
+          args.detail,
+          formatWalletStatement
+        );
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatted,
             },
           ],
         };
@@ -277,6 +304,8 @@ IMPORTANT:
       accountHolderName: z.string().describe('Full name of the bank account holder/recipient (must match bank records)'),
       swift: z.string().describe('SWIFT/BIC code of the recipient\'s bank (e.g., "DEUTDEFFXXX" for Deutsche Bank Germany)'),
       comment: z.string().optional().describe('Optional comment for the withdrawal (for your records)'),
+      format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
+      detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary, "detailed" for complete information'),
     },
     {
       readOnlyHint: false,
@@ -294,11 +323,17 @@ IMPORTANT:
           swift: args.swift,
           comment: args.comment,
         });
+        const formatted = formatResponse(
+          result,
+          args.format,
+          args.detail,
+          (data: any, detail) => formatSuccessResponse(data, 'Withdrawal Initiated', detail)
+        );
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatted,
             },
           ],
         };
@@ -376,6 +411,8 @@ IMPORTANT:
       amount: z.number().positive().describe('Amount to send'),
       comment: z.string().optional().describe('Optional comment for the transfer (max 1000 characters)'),
       sourceAccountId: z.string().optional().describe('Optional: Source account ID. If not provided, uses first account with matching currency'),
+      format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
+      detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary, "detailed" for complete information'),
     },
     {
       readOnlyHint: false,
@@ -392,11 +429,17 @@ IMPORTANT:
           comment: args.comment,
           sourceAccountId: args.sourceAccountId,
         });
+        const formatted = formatResponse(
+          result,
+          args.format,
+          args.detail,
+          (data: any, detail) => formatSuccessResponse(data, 'Money Sent', detail)
+        );
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatted,
             },
           ],
         };

@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { BarionClient } from '../utils/barion-client.js';
+import { formatResponse, formatPaymentState, formatSuccessResponse } from '../utils/response-formatter.js';
 
 export function configurePaymentTools(server: McpServer, poskey: string, environment: 'test' | 'prod' = 'test') {
   const client = new BarionClient(poskey, environment);
@@ -56,6 +57,8 @@ IMPORTANT: The payee email must be a registered Barion merchant account. All amo
       ).describe('Array of transactions'),
       redirectUrl: z.string().describe('URL where the customer will be redirected after completing payment (success or failure). Example: "https://myshop.com/payment/return"'),
       callbackUrl: z.string().describe('URL where Barion will POST payment status change notifications (webhook). Your server should listen here and call get_payment_state when notified. Example: "https://myshop.com/api/barion/callback"'),
+      format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
+      detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary, "detailed" for complete information'),
     },
     {
       readOnlyHint: false,
@@ -66,11 +69,17 @@ IMPORTANT: The payee email must be a registered Barion merchant account. All amo
     async (args) => {
       try {
         const result = await client.startPayment(args);
+        const formatted = formatResponse(
+          result,
+          args.format,
+          args.detail,
+          (data: any, detail) => formatSuccessResponse(data, 'Payment Created', detail)
+        );
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatted,
             },
           ],
         };
@@ -121,6 +130,8 @@ IMPORTANT - DO NOT POLL:
 After creating a payment with start_payment, DO NOT repeatedly poll this endpoint to detect status changes. Instead, Barion will send a callback to the callbackUrl you provided in start_payment whenever the payment status changes. When you receive the callback notification, THEN call this tool to get the updated payment details. This is more efficient and prevents unnecessary API calls.`,
     {
       paymentId: z.string().describe('The Barion payment ID'),
+      format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
+      detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary, "detailed" for complete information'),
     },
     {
       readOnlyHint: true,
@@ -131,11 +142,17 @@ After creating a payment with start_payment, DO NOT repeatedly poll this endpoin
     async (args) => {
       try {
         const result = await client.getPaymentState(args.paymentId);
+        const formatted = formatResponse(
+          result,
+          args.format,
+          args.detail,
+          formatPaymentState
+        );
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatted,
             },
           ],
         };
@@ -189,6 +206,8 @@ IMPORTANT:
           total: z.number().describe('Amount to capture'),
         })
       ).describe('Array of transactions to finish'),
+      format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
+      detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary, "detailed" for complete information'),
     },
     {
       readOnlyHint: false,
@@ -199,11 +218,17 @@ IMPORTANT:
     async (args) => {
       try {
         const result = await client.finishReservation(args);
+        const formatted = formatResponse(
+          result,
+          args.format,
+          args.detail,
+          (data: any, detail) => formatSuccessResponse(data, 'Reservation Captured', detail)
+        );
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatted,
             },
           ],
         };
@@ -259,6 +284,8 @@ TIP: Always include a descriptive comment to help with record-keeping and custom
       transactionId: z.string().describe('The transaction ID to refund'),
       amount: z.number().describe('Amount to refund'),
       comment: z.string().optional().describe('Optional comment for the refund'),
+      format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
+      detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary, "detailed" for complete information'),
     },
     {
       readOnlyHint: false,
@@ -269,11 +296,17 @@ TIP: Always include a descriptive comment to help with record-keeping and custom
     async (args) => {
       try {
         const result = await client.refundPayment(args);
+        const formatted = formatResponse(
+          result,
+          args.format,
+          args.detail,
+          (data: any, detail) => formatSuccessResponse(data, 'Refund Processed', detail)
+        );
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatted,
             },
           ],
         };
@@ -332,6 +365,8 @@ IMPORTANT:
           total: z.number().describe('Amount to capture'),
         })
       ).describe('Array of transactions to capture'),
+      format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
+      detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary, "detailed" for complete information'),
     },
     {
       readOnlyHint: false,
@@ -342,11 +377,17 @@ IMPORTANT:
     async (args) => {
       try {
         const result = await client.capturePayment(args);
+        const formatted = formatResponse(
+          result,
+          args.format,
+          args.detail,
+          (data: any, detail) => formatSuccessResponse(data, 'Payment Captured', detail)
+        );
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatted,
             },
           ],
         };
@@ -400,6 +441,8 @@ USE CASE EXAMPLE:
 Customer orders a custom product. Payment is authorized (DelayedCapture). During manufacturing, you discover you cannot source materials. Cancel the authorization to immediately release customer's funds rather than making them wait for auto-expiry.`,
     {
       paymentId: z.string().describe('The Barion payment ID to cancel'),
+      format: z.enum(['json', 'markdown']).default('markdown').describe('Response format: "json" for full JSON response, "markdown" for human-readable summary'),
+      detail: z.enum(['concise', 'detailed']).default('concise').describe('Detail level: "concise" for summary, "detailed" for complete information'),
     },
     {
       readOnlyHint: false,
@@ -410,11 +453,17 @@ Customer orders a custom product. Payment is authorized (DelayedCapture). During
     async (args) => {
       try {
         const result = await client.cancelAuthorization(args);
+        const formatted = formatResponse(
+          result,
+          args.format,
+          args.detail,
+          (data: any, detail) => formatSuccessResponse(data, 'Authorization Cancelled', detail)
+        );
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: formatted,
             },
           ],
         };
