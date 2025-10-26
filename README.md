@@ -6,93 +6,32 @@ A Model Context Protocol (MCP) server for integrating Barion payment and wallet 
 
 This MCP server provides tools to interact with the Barion API:
 
-### Payment Tools (requires POSKey)
-- **start_payment**: Start a new payment transaction
-- **get_payment_state**: Get the current state of a payment
-- **finish_reservation**: Finish (capture) a reserved payment
-- **refund_payment**: Refund a completed payment
 
-### Wallet Tools (requires API Key)
-- **get_wallet_accounts**: Get all wallet accounts
-- **get_wallet_balance**: Get wallet balance
-- **get_bank_accounts**: Get registered bank accounts
-- **get_wallet_statement**: Get transaction history
-- **withdraw_to_bank**: Withdraw funds to bank account
-- **get_user_info**: Get user information
-- **send_money**: Send money to another Barion user
 
 ## Prerequisites
 
-- Node.js 20 or higher
-- A Barion account ([Sign up here](https://secure.barion.com/))
-- **POSKey** for payment operations (for merchants)
-- **API Key** for wallet operations (for wallet access)
+* Node js 18 or newer
+* Barion credentials:
+   - **POSKey** for payment operations (get from [Shops](https://secure.barion.com/Shop))
+   - **API Key** for wallet operations (get from [Wallet -> Access](https://secure.barion.com/Access))
+* VS Code, Cursor, Windsurf, Claude Desktop, Goose or any other MCP client
 
-## Installation
 
-1. Clone this repository:
-```bash
-git clone <your-repo-url>
-cd barion-mcp
-```
+## Getting Started
+First, install the Barion MCP server with your client.
 
-2. Install dependencies:
-```bash
-npm install
-```
+Standard config works in most of the tools:
 
-3. Build the project:
-```bash
-npm run build
-```
-
-4. Set up your Barion credentials:
-```bash
-cp .env.example .env
-# Edit .env and add your credentials:
-# - BARION_POS_KEY for payment operations
-# - BARION_API_KEY for wallet operations
-```
-
-## Usage
-
-### Running the Server
-
-You can run the server in several ways:
-
-1. **With both credentials (payment + wallet):**
-```bash
-BARION_POS_KEY=your_poskey BARION_API_KEY=your_apikey npm start
-```
-
-2. **With only POSKey (payment operations only):**
-```bash
-BARION_POS_KEY=your_poskey npm start
-```
-
-3. **With only API Key (wallet operations only):**
-```bash
-BARION_API_KEY=your_apikey npm start
-```
-
-4. **With command line arguments:**
-```bash
-node dist/index.js --poskey your_poskey --api-key your_apikey
-```
-
-5. **Using the MCP Inspector (for testing):**
-```bash
-npm run inspect
-```
-
-### VS Code Integration
-
-To use this MCP server with VS Code and GitHub Copilot:
-
-1. Copy the [.vscode/mcp.json](.vscode/mcp.json) configuration
-2. Update the credentials (`BARION_POS_KEY` and/or `BARION_API_KEY`) in the configuration
-3. Restart VS Code
-4. The Barion tools will be available to GitHub Copilot
+{
+  "mcpServers": {
+    "barion": {
+      "command": "npx",
+      "args": [
+        "@barion/mcp@latest"
+      ]
+    }
+  }
+}
 
 ### Example Usage
 
@@ -111,146 +50,8 @@ Once connected, you can use natural language commands like:
 
 ## Development
 
-### Project Structure
+For development and contributing, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
-```
-barion-mcp/
-├── src/
-│   ├── index.ts              # Main server entry point
-│   ├── tools.ts              # Tool configuration
-│   ├── tools/
-│   │   ├── payment.ts        # Payment-related tools
-│   │   └── wallet.ts         # Wallet-related tools
-│   └── utils/
-│       ├── barion-client.ts  # Barion Payment API client
-│       └── wallet-client.ts  # Barion Wallet API client
-├── package.json
-├── tsconfig.json
-└── README.md
-```
-
-### Building
-
-```bash
-npm run build
-```
-
-### Formatting
-
-```bash
-npm run format
-```
-
-### Cleaning
-
-```bash
-npm run clean
-```
-
-## Architecture
-
-- **Modular tool organization**: Tools are organized by domain (payment, etc.)
-- **Type-safe schemas**: Uses Zod for runtime validation and type safety
-- **Stdio transport**: Uses standard input/output for communication
-- **Environment-based configuration**: Supports both test and production environments
-
-## API Reference
-
-### Payment Tools (POSKey Authentication)
-
-#### start_payment
-
-Start a new Barion payment transaction.
-
-**Parameters:**
-- `paymentType`: Type of payment (Immediate, Reservation, DelayedCapture)
-- `currency`: Currency code (HUF, EUR, USD, etc.)
-- `transactions`: Array of transaction objects
-- `redirectUrl`: URL to redirect after payment
-- `callbackUrl`: URL for payment callbacks
-
-#### get_payment_state
-
-Get the current state of a payment.
-
-**Parameters:**
-- `paymentId`: The Barion payment ID
-
-#### finish_reservation
-
-Finish (capture) a reserved payment.
-
-**Parameters:**
-- `paymentId`: The Barion payment ID
-- `transactions`: Array of transactions to finish
-
-#### refund_payment
-
-Refund a completed payment.
-
-**Parameters:**
-- `paymentId`: The Barion payment ID
-- `transactionId`: The transaction ID to refund
-- `amount`: Amount to refund
-- `comment`: Optional comment for the refund
-
-### Wallet Tools (API Key Authentication)
-
-#### get_wallet_accounts
-
-Get all wallet accounts.
-
-**Parameters:** None
-
-#### get_wallet_balance
-
-Get wallet balance for a specific currency or all currencies.
-
-**Parameters:**
-- `currency`: Currency code (optional)
-
-#### get_bank_accounts
-
-Get registered bank accounts.
-
-**Parameters:**
-- `currency`: Currency code to filter by (optional)
-
-#### get_wallet_statement
-
-Get wallet statement (transaction history) for a specific month.
-
-**Parameters:**
-- `year`: Year (e.g., 2025)
-- `month`: Month (1-12)
-- `currency`: Currency code (optional)
-
-#### withdraw_to_bank
-\\&
-Withdraw funds from wallet to a registered bank account.
-
-**Parameters:**
-- `currency`: Currency code
-- `amount`: Amount to withdraw
-- `bankAccountId`: ID of the registered bank account
-- `comment`: Optional comment
-
-#### get_user_info
-
-Get user information from Barion wallet.
-
-**Parameters:** None
-
-#### send_money
-
-Send money to another Barion user by email address. If the recipient is not registered in Barion, they have 7 days to claim the money.
-
-**Parameters:**
-- `recipientEmail`: Email address of the recipient
-- `currency`: Currency code (CZK, EUR, HUF, USD)
-- `amount`: Amount to send
-- `comment`: Optional comment (max 1000 characters)
-- `sourceAccountId`: Optional - Source account ID (auto-selected if not provided)
 
 ## Contributing
 
