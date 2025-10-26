@@ -22,6 +22,7 @@ First, install the Barion MCP server with your client.
 
 Standard config works in most of the tools:
 
+```js
 {
   "mcpServers": {
     "barion": {
@@ -32,6 +33,7 @@ Standard config works in most of the tools:
     }
   }
 }
+```
 
 ### Example Usage
 
