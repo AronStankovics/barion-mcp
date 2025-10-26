@@ -193,10 +193,6 @@ For development and contributing, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
-
-MIT
-
 ## Resources
 
 - [Barion API Documentation](https://docs.barion.com/)
