@@ -5,7 +5,6 @@
   "author": "Aron Stankovics <stankovics.aron@gmail.com>",
   "homepage": "https://github.com/AronStankovics/barion-mcp",
   "type": "module",
-  "main": "dist/index.js",
   "repository": {
     "type": "git",
     "url": "github:AronStankovics/barion-mcp"
@@ -17,6 +16,10 @@
   "bin": {
     "barion-mcp": "dist/index.js"
   },
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
@@ -24,7 +27,8 @@
     "clean": "shx rm -rf dist",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "jest",
-    "inspect": "mcp-inspector node dist/index.js"
+    "inspect": "mcp-inspector node dist/index.js",
+    "prepublishOnly" : "npm run build"
   },
   "keywords": [
     "ai",
