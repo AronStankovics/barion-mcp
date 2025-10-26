@@ -4,6 +4,14 @@
   "description": "MCP server for Barion integration",
   "type": "module",
   "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "github:AronStankovics/barion-mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/AronStankovics/barion-mcp/issues",
+    "email": "stankovics.aron@gmail.com"
+  },  
   "bin": {
     "barion-mcp": "dist/index.js"
   },
@@ -17,9 +25,20 @@
     "inspect": "mcp-inspector node dist/index.js"
   },
   "keywords": [
+    "ai",
     "mcp",
     "barion",
-    "payment"
+    "payment",
+    "e-payment",
+    "payment",
+    "smart",
+    "gateway",
+    "online",
+    "money",
+    "transfer",
+    "3d",
+    "secure",
+    "3ds"
   ],
   "author": "",
   "license": "MIT",
