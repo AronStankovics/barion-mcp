@@ -28,7 +28,7 @@ Standard config works in most of the tools:
     "barion": {
       "command": "npx",
       "args": [
-        "@barion/mcp@latest"
+        "barion-mcp"
       ]
     }
   }
