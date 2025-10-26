@@ -1,5 +1,5 @@
 {
-  "name": "barion-mcp",
+  "name": "@barion/mcp",
   "version": "0.1.0",
   "description": "MCP server for Barion integration",
   "author": "Aron Stankovics <stankovics.aron@gmail.com>",
