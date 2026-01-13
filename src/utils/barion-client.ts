@@ -171,68 +171,24 @@ export interface CancelAuthorizationResponse {
   Errors?: BarionError[];
 }
 
+// ============================================================================
+// Import node-barion
+// ============================================================================
+
+import Barion from 'node-barion';
+
+// ============================================================================
+// BarionClient using node-barion
+// ============================================================================
+
 export class BarionClient {
-  private poskey: string;
-  private baseUrl: string;
+  private barion: any;
 
   constructor(poskey: string, environment: 'test' | 'prod' = 'test') {
-    this.poskey = poskey;
-    this.baseUrl =
-      environment === 'prod'
-        ? 'https://api.barion.com'
-        : 'https://api.test.barion.com';
-  }
-
-  private async request<T>(endpoint: string, data: Record<string, unknown>, method: 'POST' | 'GET' = 'POST'): Promise<T> {
-    const params = {
-      POSKey: this.poskey,
-      ...data,
-    };
-
-    let url = `${this.baseUrl}${endpoint}`;
-    let body: string | undefined;
-
-    if (method === 'GET') {
-      // For GET requests, append parameters as query string
-      const queryParams = new URLSearchParams();
-      Object.entries(params).forEach(([key, value]) => {
-        queryParams.append(key, String(value));
-      });
-      url = `${url}?${queryParams.toString()}`;
-      console.error(`[Barion API] GET Request to: ${url}`);
-    } else {
-      // For POST requests, send as JSON body
-      body = JSON.stringify(params);
-      console.error(`[Barion API] POST Request to: ${url}`);
-      console.error(`[Barion API] Payload:`, JSON.stringify(params, null, 2));
-    }
-
-    const response = await fetch(url, {
-      method,
-      headers: method === 'POST' ? {
-        'Content-Type': 'application/json',
-      } : undefined,
-      body,
+    this.barion = new Barion({
+      POSKey: poskey,
+      Environment: environment,
     });
-
-    console.error(`[Barion API] Response status: ${response.status} ${response.statusText}`);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[Barion API] Error response body:`, errorText);
-      throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.error(`[Barion API] Response body:`, JSON.stringify(result, null, 2));
-
-    // Check for Barion API errors
-    if (result.Errors && result.Errors.length > 0) {
-      console.error(`[Barion API] API Errors:`, result.Errors);
-      throw new Error(`Barion API Error: ${result.Errors.map((e: any) => `${e.ErrorCode}: ${e.Title} - ${e.Description}`).join(', ')}`);
-    }
-
-    return result as T;
   }
 
   async startPayment(request: StartPaymentRequest): Promise<StartPaymentResponse> {
@@ -263,13 +219,39 @@ export class BarionClient {
       Locale: 'en-US',
     };
 
-    return this.request<StartPaymentResponse>('/v2/Payment/Start', payload);
+    console.error('[Barion API] Starting payment with node-barion');
+    console.error('[Barion API] Payload:', JSON.stringify(payload, null, 2));
+
+    const result = await this.barion.startPayment(payload);
+
+    console.error('[Barion API] Response:', JSON.stringify(result, null, 2));
+
+    // Check for Barion API errors
+    if (result.Errors && result.Errors.length > 0) {
+      console.error(`[Barion API] API Errors:`, result.Errors);
+      throw new Error(`Barion API Error: ${result.Errors.map((e: any) => `${e.ErrorCode}: ${e.Title} - ${e.Description}`).join(', ')}`);
+    }
+
+    return result as StartPaymentResponse;
   }
 
   async getPaymentState(paymentId: string): Promise<PaymentStateResponse> {
-    return this.request<PaymentStateResponse>('/v2/Payment/GetPaymentState', {
+    console.error('[Barion API] Getting payment state with node-barion');
+    console.error('[Barion API] PaymentId:', paymentId);
+
+    const result = await this.barion.getPaymentState({
       PaymentId: paymentId,
-    }, 'GET');
+    });
+
+    console.error('[Barion API] Response:', JSON.stringify(result, null, 2));
+
+    // Check for Barion API errors
+    if (result.Errors && result.Errors.length > 0) {
+      console.error(`[Barion API] API Errors:`, result.Errors);
+      throw new Error(`Barion API Error: ${result.Errors.map((e: any) => `${e.ErrorCode}: ${e.Title} - ${e.Description}`).join(', ')}`);
+    }
+
+    return result as PaymentStateResponse;
   }
 
   async finishReservation(request: FinishReservationRequest): Promise<FinishReservationResponse> {
@@ -281,7 +263,20 @@ export class BarionClient {
       })),
     };
 
-    return this.request<FinishReservationResponse>('/v2/Payment/FinishReservation', payload);
+    console.error('[Barion API] Finishing reservation with node-barion');
+    console.error('[Barion API] Payload:', JSON.stringify(payload, null, 2));
+
+    const result = await this.barion.finishReservation(payload);
+
+    console.error('[Barion API] Response:', JSON.stringify(result, null, 2));
+
+    // Check for Barion API errors
+    if (result.Errors && result.Errors.length > 0) {
+      console.error(`[Barion API] API Errors:`, result.Errors);
+      throw new Error(`Barion API Error: ${result.Errors.map((e: any) => `${e.ErrorCode}: ${e.Title} - ${e.Description}`).join(', ')}`);
+    }
+
+    return result as FinishReservationResponse;
   }
 
   async refundPayment(request: RefundPaymentRequest): Promise<RefundPaymentResponse> {
@@ -292,7 +287,20 @@ export class BarionClient {
       Comment: request.comment || '',
     };
 
-    return this.request<RefundPaymentResponse>('/v2/Payment/Refund', payload);
+    console.error('[Barion API] Refunding payment with node-barion');
+    console.error('[Barion API] Payload:', JSON.stringify(payload, null, 2));
+
+    const result = await this.barion.refundPayment(payload);
+
+    console.error('[Barion API] Response:', JSON.stringify(result, null, 2));
+
+    // Check for Barion API errors
+    if (result.Errors && result.Errors.length > 0) {
+      console.error(`[Barion API] API Errors:`, result.Errors);
+      throw new Error(`Barion API Error: ${result.Errors.map((e: any) => `${e.ErrorCode}: ${e.Title} - ${e.Description}`).join(', ')}`);
+    }
+
+    return result as RefundPaymentResponse;
   }
 
   async capturePayment(request: CapturePaymentRequest): Promise<CapturePaymentResponse> {
@@ -304,7 +312,20 @@ export class BarionClient {
       })),
     };
 
-    return this.request<CapturePaymentResponse>('/v2/Payment/Capture', payload);
+    console.error('[Barion API] Capturing payment with node-barion');
+    console.error('[Barion API] Payload:', JSON.stringify(payload, null, 2));
+
+    const result = await this.barion.capturePayment(payload);
+
+    console.error('[Barion API] Response:', JSON.stringify(result, null, 2));
+
+    // Check for Barion API errors
+    if (result.Errors && result.Errors.length > 0) {
+      console.error(`[Barion API] API Errors:`, result.Errors);
+      throw new Error(`Barion API Error: ${result.Errors.map((e: any) => `${e.ErrorCode}: ${e.Title} - ${e.Description}`).join(', ')}`);
+    }
+
+    return result as CapturePaymentResponse;
   }
 
   async cancelAuthorization(request: CancelAuthorizationRequest): Promise<CancelAuthorizationResponse> {
@@ -312,6 +333,19 @@ export class BarionClient {
       PaymentId: request.paymentId,
     };
 
-    return this.request<CancelAuthorizationResponse>('/v2/Payment/CancelAuthorization', payload);
+    console.error('[Barion API] Canceling authorization with node-barion');
+    console.error('[Barion API] Payload:', JSON.stringify(payload, null, 2));
+
+    const result = await this.barion.cancelAuthorization(payload);
+
+    console.error('[Barion API] Response:', JSON.stringify(result, null, 2));
+
+    // Check for Barion API errors
+    if (result.Errors && result.Errors.length > 0) {
+      console.error(`[Barion API] API Errors:`, result.Errors);
+      throw new Error(`Barion API Error: ${result.Errors.map((e: any) => `${e.ErrorCode}: ${e.Title} - ${e.Description}`).join(', ')}`);
+    }
+
+    return result as CancelAuthorizationResponse;
   }
 }
